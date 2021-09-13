@@ -120,7 +120,9 @@ $(function() {
         e.preventDefault();
         let formValues = new FormData(e.target);
         for (let token of tokens){
-            printToken(token);
+            if (formValues.get("coin") === token.name && !token.displayed) {
+                    printToken(token);
+            }
         }
     });
     $(".fav").on('click', function() {
@@ -129,5 +131,5 @@ $(function() {
         let fav = $(this).attr(id).replace('fav-','');
         favs.add(fav);
         $(this).innerHTML.css('color','gold');
-    })
+    });
 });
