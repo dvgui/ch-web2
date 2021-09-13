@@ -6,8 +6,17 @@ class Token{
         this.name = token.name;
         this.price = parseFloat(token.price);
     }
+/*
     inPesos(){
         return this.price * 185;
+    }
+
+ */
+    inPesosStr(){
+        return numberWithCommas(this.price*185);
+    }
+    priceStr(){
+        return numberWithCommas(this.price);
     }
 }
 
@@ -18,29 +27,35 @@ token3 = new Token({name:"zil", price:0.13});
 let tokens = [token1, token2, token3];
 
 let cotizaciones = document.getElementById("tblPrice");
-let botonCargar = document.getElementById("botonCargar");
-let botonReset = document.getElementById("botonReset");
+let loadBtn = document.getElementById("loadBtn");
 
-botonCargar.addEventListener('click', function (){
+loadBtn.addEventListener('click', function (){
     for (let token of tokens){
         console.log(token);
         let parrafo = document.createElement("tr");
         parrafo.id = token.name;
         parrafo.innerHTML = `
          <td>${token.name}</td>
-         <td>U$S ${token.price}</td>
-         <td>AR$ ${token.inPesos()}</td>
+         <td>U$S ${token.priceStr()}</td>
+         <td>AR$ ${token.inPesosStr()}</td>
+         <td><i class="fas fa-star"></i></td>
         `;
         cotizaciones.appendChild(parrafo);
     }
 })
 
-botonReset.addEventListener('click', function(){
 
-})
+$(function() {
+    $("#resetBtn").on('click', function (){
+        const parent = cotizaciones;
+        while (parent.firstChild) {
+            parent.firstChild.remove()
+        }
+    })
+});
 
 let inputSearch = document.getElementById("searchField");
-let form = document.getElementById("formu");
+let form = document.getElementById("searchForm");
 
 form.addEventListener('submit', function(e){
     e.preventDefault();
@@ -52,8 +67,9 @@ form.addEventListener('submit', function(e){
             parrafo.id = token.name;
             parrafo.innerHTML = `
          <td>${token.name}</td>
-         <td>U$S ${token.price}</td>
-         <td>AR$ ${token.inPesos()}</td>
+         <td>U$S ${token.priceStr()}</td>
+         <td>AR$ ${token.inPesosStr()}</td>
+         <td><i class="fas fa-star"></i></td>
             `;
             cotizaciones.appendChild(parrafo);
         }

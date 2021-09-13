@@ -84,10 +84,13 @@
 
                     <!-- Topbar Search -->
                     <form
-                            class="d-none d-sm-inline-block form-inline mr-auto ml-md-3 my-2 my-md-0 mw-100 navbar-search">
+                            class="d-none d-sm-inline-block form-inline
+                            mr-auto ml-md-3 my-2 my-md-0 mw-100 navbar-search"
+                            id="searchForm" onsubmit="">
                         <div class="input-group">
                             <input type="text" class="form-control bg-light border-0 small" placeholder="Search for..."
-                                   aria-label="Search" aria-describedby="basic-addon2">
+                                   aria-label="Search" aria-describedby="basic-addon2"
+                                   name="coin" >
                             <div class="input-group-append">
                                 <button class="btn btn-primary" type="button">
                                     <i class="fas fa-search fa-sm"></i>
@@ -135,9 +138,9 @@
 
                     <!-- Page Heading -->
                     <div class="d-sm-flex align-items-center justify-content-lg-end mb-4">
-                        <button href="#" class="d-none d-sm-inline-block btn btn-sm btn-secondary shadow-sm" id="botonReset"><i
+                        <button href="#" class="d-none d-sm-inline-block btn btn-sm btn-secondary shadow-sm" id="resetBtn"><i
                                 class="fas fa-broom fa-sm text-white-50" ></i> Reset</button>
-                        <button href="#" class="d-none d-sm-inline-block btn btn-sm btn-primary shadow-sm" id="botonCargar"><i
+                        <button href="#" class="d-none d-sm-inline-block btn btn-sm btn-primary shadow-sm" id="loadBtn"><i
                                 class="fas fa-eye fa-sm text-white-50" ></i> Show All</button>
                     </div>
 
@@ -159,6 +162,7 @@
                                         <th>Token Name</th>
                                         <th>Token Price in USD</th>
                                         <th>Token Price in ARS</th>
+                                        <th>Favorite</th>
                                     </tr>
                                     </thead>
                                     <tfoot>
@@ -166,6 +170,7 @@
                                         <th>Token Name</th>
                                         <th>Token Price in USD</th>
                                         <th>Token Price in ARS</th>
+                                        <th>Favorite</th>
                                     </tr>
                                     </tfoot>
                                     <tbody id="tblPrice">
