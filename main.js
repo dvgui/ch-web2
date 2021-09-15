@@ -26,7 +26,7 @@ class Favorites {
     }
     add(token){
         if (!this.tokens.includes(token)) {
-            this.tokens.append(token.toString());
+            this.tokens.push(token.toString());
             this.save();
         }
     }
@@ -77,7 +77,7 @@ token3 = new Token({name:"zil", price:0.13});
 
 let tokens = [token1, token2, token3];
 
-let favs = new Favorites();
+const favs = new Favorites();
 
 let prices = document.getElementById("tblPrice");
 //Example without jQuery
@@ -114,6 +114,12 @@ $(function() {
             if (!token.displayed){
                 printToken(token);
             }
+            $(`#fav-${token.name}`).on('click', function() {
+                //TODO click not working. dynamically generated html ?
+                let fav = this.id.replace('fav-','');
+                favs.add(fav);
+                $(`#fav-${token.name} .fas`).css('color','gold');
+            });
         }
     });
     $(".navbar-search").submit(function(e) {
@@ -123,13 +129,13 @@ $(function() {
             if (formValues.get("coin") === token.name && !token.displayed) {
                     printToken(token);
             }
+            $(`#fav-${token.name}`).on('click', function() {
+                //TODO click not working. dynamically generated html ?
+                let fav = this.id.replace('fav-','');
+                favs.add(fav);
+                $(`#fav-${token.name} .fas`).css('color','gold');
+            });
         }
     });
-    $(".fav").on('click', function() {
-        //TODO click not working. dynamically generated html ?
-        alert("clicked");
-        let fav = $(this).attr(id).replace('fav-','');
-        favs.add(fav);
-        $(this).innerHTML.css('color','gold');
-    });
+
 });
