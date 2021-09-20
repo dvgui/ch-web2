@@ -42,21 +42,30 @@ function printToken(token) {
     });
 }
 
-function metaConnect(response){
-    chainId = parseInt(response.chainId);
+function metaConnect(chainId){
+    chainId = parseInt(chainId);
     signer = provider.getSigner();
 
     //Fetch default account
     provider.listAccounts().then(async (accounts) => {
-        wallet_address = accounts[0];
+        let wallet_address = accounts[0];
         if (wallet_address) {
-            console.log("Reconnected account:", wallet_address);
-            $("#walletAddress").html(wallet_address.slice(0, 5) + "..." + wallet_address.slice(35,39));
+            console.log("Connected account:", wallet_address);
+            setAddress(wallet_address);
             let balance = await provider.getBalance(await signer.getAddress())
             console.log("ETH Balance: " + ethers.utils.formatEther(balance));
             $("#walletConnect button").removeClass('btn-danger').addClass('btn-success');
         }
     });
+}
+
+function setAddress(wallet_address){
+    if (wallet_address){
+        $("#walletAddress").html(wallet_address.slice(0, 6) + "..." + wallet_address.slice(-4));
+    }
+    else {
+        $("#walletAddress").html();
+    }
 }
 
 // Classes
@@ -149,7 +158,7 @@ const token3 = new Token("zil", 0.13,{
 });
 
 let tokens = [token1, token2, token3];
-let wallet_address, chainId, signer;
+let chainId, signer;
 
 
 const favs = new Favorites();
@@ -203,15 +212,20 @@ $(function() {
     });
     //initial connect
     $('#walletConnect').on('click', async () => {
-        signer = provider.getSigner()
+        signer = provider.getSigner();
+        chainId = parseInt(window.ethereum.request({ method: 'eth_chainId' }));
+
         await provider.send("eth_requestAccounts", []);
-        wallet_address = await signer.getAddress()
+        let wallet_address = await signer.getAddress()
+        setAddress(wallet_address);
         // log
         console.log("Connected account:", wallet_address);
         let balance = await provider.getBalance(await signer.getAddress())
         console.log("ETH Balance: " + ethers.utils.formatEther(balance));
         //$("#walletDisconnect").removeClass('d-none');
         $("#walletConnect button").removeClass('btn-danger').addClass('btn-success');
+        chainId = parseInt(window.ethereum.request({ method: 'eth_chainId' }));
+        //metaConnect(chainId);
         // TODO: detect when wallet is available & change icon to green.
         // TODO: warn when network is not ethereum
         // TODO: list tokens
@@ -235,6 +249,7 @@ if (typeof window.ethereum !== 'undefined') {
     console.log('MetaMask is installed!');
 }
 else {
+    $("#walletConnect button").removeClass('btn-info').addClass('btn-danger');
     console.log('Metamask is not installed');
     $('#walletDisconnect').hide();
 }
@@ -251,7 +266,7 @@ TODO: añadir evento a conexion en vez de al click del boton. para que se dispar
 
 //reconnect
 window.ethereum.addListener('connect', async (response) => {
-    metaConnect(response);
+    metaConnect(response.chainId);
 });
 
 window.ethereum.addListener('disconnect', () => {
@@ -259,5 +274,5 @@ window.ethereum.addListener('disconnect', () => {
     $("#walletConnect button").removeClass('btn-success').addClass('btn-info');
 });
 window.ethereum.addListener('accountsChanged', async (response) => {
-    metaConnect(response);
+    metaConnect(response.chainId);
 });
