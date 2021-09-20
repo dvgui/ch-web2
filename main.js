@@ -51,6 +51,7 @@ function metaConnect(response){
         wallet_address = accounts[0];
         if (wallet_address) {
             console.log("Reconnected account:", wallet_address);
+            $("#walletAddress").html(wallet_address.slice(0, 5) + "..." + wallet_address.slice(35,39));
             let balance = await provider.getBalance(await signer.getAddress())
             console.log("ETH Balance: " + ethers.utils.formatEther(balance));
             $("#walletConnect button").removeClass('btn-danger').addClass('btn-success');
