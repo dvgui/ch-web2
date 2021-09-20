@@ -84,7 +84,7 @@
 
                     <!-- Topbar Search -->
                     <form   class="d-none d-sm-inline-block form-inline
-                            mr-auto ml-md-3 my-2 my-md-0 mw-100 navbar-search"
+                            mr-auto ml-md-3 my-2 my-md-0 mw-80 navbar-search"
                             onsubmit="">
                         <div class="input-group">
                             <input type="text" class="form-control bg-light border-0 small" placeholder="Search for..."
@@ -125,6 +125,22 @@
                                 </form>
                             </div>
                         </li>
+
+
+                        <li class="nav-item d-sm-inline-block">
+                            <a class="nav-link no-arrow" id="walletConnect">
+                            <button class="btn btn-secondary" type="button">
+                                <i class="fas fa-wallet"></i>
+                            </button>
+                            </a>
+                        </li>
+                        <!--li class="nav-item d-sm-inline-block" >
+                            <a class="nav-link no-arrow d-none" id="walletDisconnect">
+                                <button class="btn btn-danger" type="button">
+                                    <i class="fas fa-window-close "></i>
+                                </button>
+                            </a>
+                        </li-->
 
 
 
@@ -224,6 +240,8 @@
     <!-- Page level custom scripts -->
     <script src="js/demo/chart-area-demo.js"></script>
     <script src="js/demo/chart-pie-demo.js"></script>
+    <script src="https://cdn.ethers.io/lib/ethers-5.2.umd.min.js"
+            type="application/javascript"></script>
     <script src="main.js"></script>
 
 </body>
