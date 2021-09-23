@@ -3,8 +3,8 @@
 const URL_BLUE = "https://api.bluelytics.com.ar/v2/latest";
 const TOKEN_API = "https://api.ethplorer.io/getAddressInfo/";
 const COINGECKO_API = 'https://api.coingecko.com/api/v3/coins/markets?'
-//const API_KEY = "freekey";
-const API_KEY = "EK-rWV3K-2edNdjh-LbjbJ";
+const API_KEY = "freekey";
+//const API_KEY = "EK-rWV3K-2edNdjh-LbjbJ";
 
 // Functions
 
@@ -136,7 +136,7 @@ class Token{
 
 // INIT
 
-let wallet_tokens = [];
+let wallet_tokens = []
 let gecko_tokens = [];
 let chainId, signer;
 let per_page = 25;
@@ -167,17 +167,17 @@ $(function() {
         clearTokenDisplay();
     });
 
-    $("#loadBtn").on('click', function(){
+    $("#loadBtn").on('click', async function () {
         $("#resetBtn").trigger('click');
         fetch(COINGECKO_API + new URLSearchParams({
-            "vs_currency" : "usd",
-            "order" : "market_cap_desc",
-            "per_page" : per_page,
-            "page" : page,
-            "sparkline" : false,
-            "price_change_percentage" : "24h"
+            "vs_currency": "usd",
+            "order": "market_cap_desc",
+            "per_page": per_page,
+            "page": page,
+            "sparkline": false,
+            "price_change_percentage": "24h"
         }))
-            .then(response=> response.json())
+            .then(response => response.json())
             .then(data => {
                 console.log(data);
                 for (let coin of data) {
@@ -198,7 +198,7 @@ $(function() {
                 valorDolar.innerHTML = dollar;
                 //get tokens
                 for (let token of gecko_tokens) {
-                    if (!token.displayed){
+                    if (!token.displayed) {
                         //pass dollar value to tokens
                         printToken(token, dollar);
                     }
@@ -268,22 +268,22 @@ $(function() {
                             ))
                     }
                 }
+                fetch(URL_BLUE)
+                    .then(response => response.json())
+                    .then(data => {
+                        console.log(data.blue.value_avg);
+                        let dollar = data.blue.value_avg;
+                        valorDolar.innerHTML = dollar;
+                        //get tokens
+                        for (let token of wallet_tokens) {
+                            if (!token.displayed){
+                                //pass dollar value to tokens
+                                printToken(token, dollar);
+                            }
+                        }
+                    });
 
-            });
-        fetch(URL_BLUE)
-            .then(response => response.json())
-            .then(data => {
-                console.log(data.blue.value_avg);
-                let dollar = data.blue.value_avg;
-                valorDolar.innerHTML = dollar;
-                //get tokens
-                for (let token of wallet_tokens) {
-                    if (!token.displayed){
-                        //pass dollar value to tokens
-                        printToken(token, dollar);
-                    }
-                }
-            });
+            })
 
 
         //$("#walletDisconnect").removeClass('d-none');
