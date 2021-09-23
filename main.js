@@ -15,6 +15,9 @@ function clearTokenDisplay() {
     for (let token of wallet_tokens) {
         token.displayed = false;
     }
+    for (let token of gecko_tokens) {
+        token.displayed = false;
+    }
 }
 function printToken(token, dollar) {
     $("#tblPrice").append(`
@@ -136,7 +139,7 @@ class Token{
 
 // INIT
 
-let wallet_tokens = []
+let wallet_tokens = [];
 let gecko_tokens = [];
 let chainId, signer;
 let per_page = 25;
@@ -160,6 +163,8 @@ let valorDolar = document.getElementById('valorDolar');
 $(function() {
 
     $("#resetBtn").on('click', function (){
+        wallet_tokens = [];
+        gecko_tokens = [];
         const parent = prices;
         while (parent.firstChild) {
             parent.firstChild.remove()
