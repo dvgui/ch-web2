@@ -1,24 +1,27 @@
 // Settings
 
 const URL_BLUE = "https://api.bluelytics.com.ar/v2/latest";
+const TOKEN_API = "https://api.ethplorer.io/getAddressInfo/";
+const COINGECKO_API = 'https://api.coingecko.com/api/v3/coins/markets?'
+//const API_KEY = "freekey";
+const API_KEY = "EK-rWV3K-2edNdjh-LbjbJ";
 
 // Functions
 
 function numberWithCommas(x) {
     return x.toString().replace(/\B(?<!\.\d*)(?=(\d{3})+(?!\d))/g, ",");
 }
-
 function clearTokenDisplay() {
-    for (let token of tokens) {
+    for (let token of wallet_tokens) {
         token.displayed = false;
     }
 }
-function printToken(token) {
+function printToken(token, dollar) {
     $("#tblPrice").append(`
                 <tr>
                 <td>${token.name}</td>
                 <td>U$S ${token.priceStr()}</td>
-                <td class="ars">ARS ${token.inPesosStr()}</td>
+                <td class="ars">ARS ${numberWithCommas(token.inCurrency(dollar))}</td>
                 <td><a class="fav" id="fav-${token.name}"><i class="fas fa-star"></i></a></td>
                 </tr>
                 `);
@@ -41,7 +44,6 @@ function printToken(token) {
         }
     });
 }
-
 function metaConnect(chainId){
     chainId = parseInt(chainId);
     signer = provider.getSigner();
@@ -54,11 +56,13 @@ function metaConnect(chainId){
             setAddress(wallet_address);
             let balance = await provider.getBalance(await signer.getAddress())
             console.log("ETH Balance: " + ethers.utils.formatEther(balance));
+
+            //Logic for ERC20
+
             $("#walletConnect button").removeClass('btn-danger').addClass('btn-success');
         }
     });
 }
-
 function setAddress(wallet_address){
     if (wallet_address){
         $("#walletAddress").html(wallet_address.slice(0, 6) + "..." + wallet_address.slice(-4));
@@ -110,74 +114,51 @@ class Favorites {
     }
 }
 
-
-
 class Token{
-    constructor(name, price, contract) {
+    constructor(name, symbol , price = 0, contract = 0, balance = 0) {
         this.name = name;
+        this.symbol = symbol;
         this.price = parseFloat(price);
-        this.contract = new Contract(contract.network, contract.address)
+        this.contract = contract;
         this.displayed = false;
-        this.balance = 0;
-    }
-    inPesos(){
-        return this.price * 185;
-    }
-    inPesosStr(){
-        return numberWithCommas(this.inPesos()*185);
+        this.balance = balance;
     }
     priceStr(){
         return numberWithCommas(this.price);
     }
     inCurrency(currency){
-        return this.price * currency;
+        return (this.price * currency).toFixed(2);
     }
 }
 
-class Contract {
-    constructor (network, address) {
-        this.network = network;
-        this.address = address;
-    }
-}
+
 
 
 // INIT
 
-const token1 = new Token("btc", 40000,{
-    network :'eth',
-    address : '0x2260fac5e5542a773aa44fbcfedf7c193bc2c599'
-});
-const token2 = new Token("eth", 3000,{
-    network : 'eth',
-    address : ''
-});
-const token3 = new Token("zil", 0.13,{
-    network : 'zil',
-    address : ''
-});
-
-let tokens = [token1, token2, token3];
+let wallet_tokens = [];
+let gecko_tokens = [];
 let chainId, signer;
-
+let per_page = 25;
+let page = 1;
 
 const favs = new Favorites();
 
 // A Web3Provider wraps a standard Web3 provider, which is
 // what Metamask injects as window.ethereum into each page
 const provider = new ethers.providers.Web3Provider(window.ethereum);
-
 // The Metamask plugin also allows signing transactions to
 // send ether and pay to change state within the blockchain.
 // For this, you need the account signer...
 
-
 let prices = document.getElementById("tblPrice");
 
-
+//res.blue.value_avg
+let valorDolar = document.getElementById('valorDolar');
 
 
 $(function() {
+
     $("#resetBtn").on('click', function (){
         const parent = prices;
         while (parent.firstChild) {
@@ -187,17 +168,50 @@ $(function() {
     });
 
     $("#loadBtn").on('click', function(){
-        for (let token of tokens) {
-            if (!token.displayed){
-                printToken(token);
-            }
-        }
+        $("#resetBtn").trigger('click');
+        fetch(COINGECKO_API + new URLSearchParams({
+            "vs_currency" : "usd",
+            "order" : "market_cap_desc",
+            "per_page" : per_page,
+            "page" : page,
+            "sparkline" : false,
+            "price_change_percentage" : "24h"
+        }))
+            .then(response=> response.json())
+            .then(data => {
+                console.log(data);
+                for (let coin of data) {
+                    gecko_tokens.push(new Token(
+                        coin.name,
+                        coin.symbol,
+                        coin.current_price)
+                    )
+                }
+            })
+
+        //get dollar price
+        fetch(URL_BLUE)
+            .then(response => response.json())
+            .then(data => {
+                console.log(data.blue.value_avg);
+                let dollar = data.blue.value_avg;
+                valorDolar.innerHTML = dollar;
+                //get tokens
+                for (let token of gecko_tokens) {
+                    if (!token.displayed){
+                        //pass dollar value to tokens
+                        printToken(token, dollar);
+                    }
+                }
+            });
+
+
     });
     $(".navbar-search").submit(function(e) {
         e.preventDefault();
         let formValues = new FormData(e.target);
         let coin = formValues.get("coin");
-        for (let token of tokens){
+        for (let token of wallet_tokens){
             if (coin === token.name && !token.displayed) {
                     $("#resetBtn").trigger('click');
                     printToken(token);
@@ -207,11 +221,13 @@ $(function() {
 
 
     $('body').ready(() => {
+
         $("#loadBtn").trigger('click');
 
     });
     //initial connect
     $('#walletConnect').on('click', async () => {
+        $("#resetBtn").trigger('click');
         signer = provider.getSigner();
         chainId = parseInt(window.ethereum.request({ method: 'eth_chainId' }));
 
@@ -222,27 +238,75 @@ $(function() {
         console.log("Connected account:", wallet_address);
         let balance = await provider.getBalance(await signer.getAddress())
         console.log("ETH Balance: " + ethers.utils.formatEther(balance));
+
+
+
+        //Logic for ERC20
+        fetch(TOKEN_API + wallet_address + '\/?' + new URLSearchParams(
+            {'apiKey': API_KEY})
+            )
+            .then(response => response.json())
+            .then(data => {
+                if (data.ETH.balance > 0){
+                    wallet_tokens.push(new Token(
+                        "Ethereum",
+                        "ETH",
+                        data.ETH.price.rate,
+                        0,
+                        data.ETH.balance
+                    ));
+                }
+                //console.log(data.tokens);
+                if (data.tokens){
+                    for (let tok of data.tokens) {
+                        wallet_tokens.push(new Token(
+                            tok.tokenInfo.name,
+                            tok.tokenInfo.symbol,
+                            tok.tokenInfo.price.rate,
+                            tok.tokenInfo.address,
+                            tok.tokenInfo.balance
+                            ))
+                    }
+                }
+
+            });
+        fetch(URL_BLUE)
+            .then(response => response.json())
+            .then(data => {
+                console.log(data.blue.value_avg);
+                let dollar = data.blue.value_avg;
+                valorDolar.innerHTML = dollar;
+                //get tokens
+                for (let token of wallet_tokens) {
+                    if (!token.displayed){
+                        //pass dollar value to tokens
+                        printToken(token, dollar);
+                    }
+                }
+            });
+
+
         //$("#walletDisconnect").removeClass('d-none');
         $("#walletConnect button").removeClass('btn-danger').addClass('btn-success');
         chainId = parseInt(window.ethereum.request({ method: 'eth_chainId' }));
         //metaConnect(chainId);
-        // TODO: detect when wallet is available & change icon to green.
         // TODO: warn when network is not ethereum
-        // TODO: list tokens
 
 
     });
     $('#walletDisconnect').on('click', async () =>{
-        // TODO desconect from metamask
+        // disconnect from metamask. not implemented by extension
         // ethereum.on('accountsChanged', handler: (accounts: Array<string>) => void);
 
         $('#walletDisconnect').hide();
     });
 
-
-
-
 });
+
+
+
+
+
 // detect if metamask is available
 //log
 if (typeof window.ethereum !== 'undefined') {
