@@ -308,15 +308,15 @@ $(function() {
 
 
 // detect if metamask is available
-//log
+
 if (typeof window.ethereum !== 'undefined') {
     console.log('MetaMask is installed!');
     // A Web3Provider wraps a standard Web3 provider, which is
-// what Metamask injects as window.ethereum into each page
+    // what Metamask injects as window.ethereum into each page
     const provider = new ethers.providers.Web3Provider(window.ethereum);
-// The Metamask plugin also allows signing transactions to
-// send ether and pay to change state within the blockchain.
-// For this, you need the account signer...
+    // The Metamask plugin also allows signing transactions to
+    // send ether and pay to change state within the blockchain.
+    // For this, you need the account signer...
 }
 else {
     $("#walletConnect button").removeClass('btn-info').addClass('btn-danger');
@@ -330,16 +330,13 @@ window.ethereum.on('chainChanged', () => {
 window.ethereum.on('disconnect', () => {
     window.location.reload();
 });
-/*
-TODO: añadir evento a conexion en vez de al click del boton. para que se dispare cuando metamask engancha.
-*/
 
 //reconnect
 window.ethereum.addListener('connect', async (response) => {
     metaConnect(response.chainId);
 });
 
-window.ethereum.addListener('disconnect', () => {
+window.ethereum.addListener('disconnect', async () => {
     console.log("Wallet disconnected");
     $("#walletConnect button").removeClass('btn-success').addClass('btn-info');
 });
