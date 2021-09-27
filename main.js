@@ -19,6 +19,24 @@ function clearTokenDisplay() {
         token.displayed = false;
     }
 }
+function getProvider(){
+    let provider = false;
+    if (typeof window.ethereum != 'undefined') {
+        console.log('MetaMask is installed!');
+        // A Web3Provider wraps a standard Web3 provider, which is
+        // what Metamask injects as window.ethereum into each page
+        provider = new ethers.providers.Web3Provider(window.ethereum);
+        // The Metamask plugin also allows signing transactions to
+        // send ether and pay to change state within the blockchain.
+        // For this, you need the account signer...
+    }
+    else {
+        $("#walletConnect button").removeClass('btn-info').addClass('btn-danger');
+        console.log('Metamask is not installed');
+        $('#walletDisconnect').hide();
+    }
+    return provider;
+}
 function printToken(token, dollar) {
     $("#tblPrice").append(`
                 <tr>
@@ -205,8 +223,8 @@ $(function() {
                 }
             });
 
-
     });
+
     $(".navbar-search").submit(function(e) {
         e.preventDefault();
         let formValues = new FormData(e.target);
@@ -219,81 +237,85 @@ $(function() {
         }
     });
 
-
     $('body').ready(() => {
-
         $("#loadBtn").trigger('click');
-
     });
+
     //initial connect
     $('#walletConnect').on('click', async () => {
         $("#resetBtn").trigger('click');
-        signer = provider.getSigner();
-        chainId = parseInt(window.ethereum.request({ method: 'eth_chainId' }));
+        let provider = getProvider();
+        if (provider) {
 
-        await provider.send("eth_requestAccounts", []);
-        let wallet_address = await signer.getAddress()
-        setAddress(wallet_address);
-        // log
-        console.log("Connected account:", wallet_address);
-        let balance = await provider.getBalance(await signer.getAddress())
-        console.log("ETH Balance: " + ethers.utils.formatEther(balance));
+            signer = provider.getSigner();
+            chainId = parseInt(window.ethereum.request({ method: 'eth_chainId' }));
+
+            await provider.send("eth_requestAccounts", []);
+            let wallet_address = await signer.getAddress();
+            setAddress(wallet_address);
+            // log
+            console.log("Connected account:", wallet_address);
+            let balance = await provider.getBalance(await signer.getAddress());
+            console.log("ETH Balance: " + ethers.utils.formatEther(balance));
 
 
-
-        //Logic for ERC20
-        fetch(TOKEN_API + wallet_address + '\/?' + new URLSearchParams(
-            {'apiKey': API_KEY})
-            )
-            .then(response => response.json())
-            .then(data => {
-                if (data.ETH.balance > 0){
-                    wallet_tokens.push(new Token(
-                        "Ethereum",
-                        "ETH",
-                        data.ETH.price.rate,
-                        0,
-                        data.ETH.balance
-                    ));
-                }
-                //console.log(data.tokens);
-                if (data.tokens){
-                    for (let tok of data.tokens) {
+            //Logic for ERC20 Tokens
+            fetch(TOKEN_API + wallet_address + '\/?' + new URLSearchParams(
+                {'apiKey': API_KEY})
+                )
+                .then(response => response.json())
+                .then(data => {
+                    if (data.ETH.balance > 0) {
                         wallet_tokens.push(new Token(
-                            tok.tokenInfo.name,
-                            tok.tokenInfo.symbol,
-                            tok.tokenInfo.price.rate,
-                            tok.tokenInfo.address,
-                            tok.tokenInfo.balance
-                            ))
+                            "Ethereum",
+                            "ETH",
+                            data.ETH.price.rate,
+                            0,
+                            data.ETH.balance
+                        ));
                     }
-                }
-                fetch(URL_BLUE)
-                    .then(response => response.json())
-                    .then(data => {
-                        console.log(data.blue.value_avg);
-                        let dollar = data.blue.value_avg;
-                        valorDolar.innerHTML = dollar;
-                        //get tokens
-                        for (let token of wallet_tokens) {
-                            if (!token.displayed){
-                                //pass dollar value to tokens
-                                printToken(token, dollar);
-                            }
+                    //console.log(data.tokens);
+                    if (data.tokens){
+                        for (let tok of data.tokens) {
+                            wallet_tokens.push(new Token(
+                                tok.tokenInfo.name,
+                                tok.tokenInfo.symbol,
+                                tok.tokenInfo.price.rate,
+                                tok.tokenInfo.address,
+                                tok.tokenInfo.balance
+                                ))
                         }
-                    });
+                    }
+                    fetch(URL_BLUE)
+                        .then(response => response.json())
+                        .then(data => {
+                            console.log(data.blue.value_avg);
+                            let dollar = data.blue.value_avg;
+                            valorDolar.innerHTML = dollar;
+                            //get tokens
+                            for (let token of wallet_tokens) {
+                                if (!token.displayed){
+                                    //pass dollar value to tokens
+                                    printToken(token, dollar);
+                                }
+                            }
+                        });
 
-            })
+                });
 
 
-        //$("#walletDisconnect").removeClass('d-none');
-        $("#walletConnect button").removeClass('btn-danger').addClass('btn-success');
-        chainId = parseInt(window.ethereum.request({ method: 'eth_chainId' }));
-        //metaConnect(chainId);
+            //$("#walletDisconnect").removeClass('d-none');
+            $("#walletConnect button").removeClass('btn-danger').addClass('btn-success');
+            chainId = parseInt(window.ethereum.request({ method: 'eth_chainId' }));
+            //metaConnect(chainId);
+        }
+
         // TODO: warn when network is not ethereum
 
 
+
     });
+
     $('#walletDisconnect').on('click', async () =>{
         // disconnect from metamask. not implemented by extension
         // ethereum.on('accountsChanged', handler: (accounts: Array<string>) => void);
@@ -309,20 +331,8 @@ $(function() {
 
 // detect if metamask is available
 
-if (typeof window.ethereum !== 'undefined') {
-    console.log('MetaMask is installed!');
-    // A Web3Provider wraps a standard Web3 provider, which is
-    // what Metamask injects as window.ethereum into each page
-    const provider = new ethers.providers.Web3Provider(window.ethereum);
-    // The Metamask plugin also allows signing transactions to
-    // send ether and pay to change state within the blockchain.
-    // For this, you need the account signer...
-}
-else {
-    $("#walletConnect button").removeClass('btn-info').addClass('btn-danger');
-    console.log('Metamask is not installed');
-    $('#walletDisconnect').hide();
-}
+
+
 
 window.ethereum.on('chainChanged', () => {
     window.location.reload();
