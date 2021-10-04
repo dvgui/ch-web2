@@ -43,25 +43,26 @@ function printToken(token, dollar) {
                 <td>${token.name}</td>
                 <td>U$S ${token.priceStr()}</td>
                 <td class="ars">ARS ${numberWithCommas(token.inCurrency(dollar))}</td>
-                <td><a class="fav" id="fav-${token.name}"><i class="fas fa-star"></i></a></td>
+                <td><a class="fav" id="fav-${token.name_seo}"><i class="fas fa-star"></i></a></td>
                 </tr>
                 `);
+
     if (favs.isFavorite(token.name)) {
-        $(`#fav-${token.name} .fas`).css('color','gold');
+        $(`#fav-${token.name_seo} .fas`).css('color','gold');
     }
     else {
-        $(`#fav-${token.name} .fas`).css('color','grey');
+        $(`#fav-${token.name_seo} .fas`).css('color','grey');
     }
     token.displayed = true;
 
-    $(`#fav-${token.name}`).on('click', function() {
+    $(`#fav-${token.name_seo}`).on('click', function() {
         if (favs.isFavorite(token.name)) {
             favs.remove(token.name);
-            $(`#fav-${token.name} .fas`).css('color','grey');
+            $(`#fav-${token.name_seo} .fas`).css('color','grey');
         }
         else {
             favs.add(token.name);
-            $(`#fav-${token.name} .fas`).css('color','gold');
+            $(`#fav-${token.name_seo} .fas`).css('color','gold');
         }
     });
 }
@@ -119,7 +120,7 @@ class Favorites {
     }
     save(){
         localStorage.clear();
-        localStorage.setItem("tokens",JSON.stringify(this.tokens));
+        localStorage.setItem("tokens", JSON.stringify(this.tokens));
     }
     restore(){
         const restored = localStorage.getItem("tokens");
@@ -138,6 +139,7 @@ class Favorites {
 class Token{
     constructor(name, symbol , price = 0, contract = 0, balance = 0) {
         this.name = name;
+        this.name_seo = name.replace(/\s/g, '-');
         this.symbol = symbol;
         this.price = parseFloat(price);
         this.contract = contract;
@@ -151,7 +153,6 @@ class Token{
         return (this.price * currency).toFixed(2);
     }
 }
-
 
 
 
@@ -225,6 +226,49 @@ $(function() {
 
     });
 
+    $("#favBtn").click(() => {
+        $("#resetBtn").trigger('click');
+        fetch(COINGECKO_API + new URLSearchParams({
+            "vs_currency": "usd",
+            "order": "market_cap_desc",
+            "per_page": per_page,
+            "page": page,
+            "sparkline": false,
+            "price_change_percentage": "24h"
+        }))
+            .then(response => response.json())
+            .then(data => {
+                console.log(data);
+                for (let coin of data) {
+                    gecko_tokens.push(new Token(
+                        coin.name,
+                        coin.symbol,
+                        coin.current_price)
+                    )
+                }
+            })
+
+        //get dollar price
+        fetch(URL_BLUE)
+            .then(response => response.json())
+            .then(data => {
+                console.log(data.blue.value_avg);
+                let dollar = data.blue.value_avg;
+                valorDolar.innerHTML = dollar;
+                //get tokens
+                for (let token of gecko_tokens) {
+                    if (!token.displayed) {
+                        //pass dollar value to tokens
+                        if (favs.isFavorite(token.name)){
+                            printToken(token, dollar);
+                        }
+
+                    }
+                }
+            });
+
+    })
+
     $(".navbar-search").submit(function(e) {
         e.preventDefault();
         let formValues = new FormData(e.target);
@@ -239,6 +283,7 @@ $(function() {
 
     $('body').ready(() => {
         $("#loadBtn").trigger('click');
+
     });
 
     //initial connect
@@ -337,6 +382,7 @@ $(function() {
 window.ethereum.on('chainChanged', () => {
     window.location.reload();
 });
+
 window.ethereum.on('disconnect', () => {
     window.location.reload();
 });
@@ -350,6 +396,7 @@ window.ethereum.addListener('disconnect', async () => {
     console.log("Wallet disconnected");
     $("#walletConnect button").removeClass('btn-success').addClass('btn-info');
 });
+
 window.ethereum.addListener('accountsChanged', async (response) => {
     metaConnect(response.chainId);
 });
